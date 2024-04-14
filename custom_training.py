@@ -133,13 +133,11 @@ def train_model(model, train_loader, val_loader, num_epochs=1, task='A'):
     if task == 'A':
         for param in model.headB.parameters():
             param.requires_grad = False
-        target_head = model.headA
-        optimizer = optim.Adam(model.headA.parameters(), lr=0.001)
+        optimizer = optim.Adam(model.headA.parameters(), lr=0.01)
     elif task == 'B':
         for param in model.headA.parameters():
             param.requires_grad = False
-        target_head = model.headB
-        optimizer = optim.Adam(model.headB.parameters(), lr=0.001)
+        optimizer = optim.Adam(model.headB.parameters(), lr=0.01)
 
     model.train() 
     
@@ -151,7 +149,7 @@ def train_model(model, train_loader, val_loader, num_epochs=1, task='A'):
             
             optimizer.zero_grad()
             
-            outputs = model(images)
+            outputs = model(images, task)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()

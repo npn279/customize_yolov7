@@ -147,13 +147,35 @@ def train_model(model, dataloader, num_epochs=1):
     print('Training complete')
 
 print('Training Task A')
-train_model(modelA, val_loader_A)
+train_model(modelA, train_loader_A)
 
 print('Training Task B')
-train_model(modelB, val_loader_B)
+train_model(modelB, train_loader_B)
 
 # Save the model
 torch.save(modelA.state_dict(), 'taskA.pth')
 torch.save(modelB.state_dict(), 'taskB.pth')
+
+# Inference
+def inference(model, dataloader):
+    model.eval()
+    correct = 0
+    total = 0
+    
+    with torch.no_grad():
+        for images, labels in dataloader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    
+    print(f'Accuracy: {100 * correct / total}%')
+
+print('Inference Task A')
+inference(modelA, val_loader_A)
+
+print('Inference Task B')
+inference(modelB, val_loader_B)
 
 

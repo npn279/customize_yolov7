@@ -33,35 +33,59 @@ import torch.nn.functional as F
 
 
 # # Head Task A
-class HeadA(nn.Module):
-    def __init__(self, backbone):
-        super(HeadA, self).__init__()
-        self.backbone = backbone
-        self.pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.head = nn.Linear(1024, 10)
+# class HeadA(nn.Module):
+#     def __init__(self, backbone):
+#         super(HeadA, self).__init__()
+#         self.backbone = backbone
+#         self.pool = nn.AdaptiveAvgPool2d((1, 1))
+#         self.head = nn.Linear(1024, 10)
 
-    def forward(self, x):
-        x = self.backbone(x)
-        x = self.pool(x)
-        x = torch.flatten(x, 1)
-        x = self.head(x)
-        return x
+#     def forward(self, x):
+#         x = self.backbone(x)
+#         x = self.pool(x)
+#         x = torch.flatten(x, 1)
+#         x = self.head(x)
+#         return x
 
-# # Head Task B
-class HeadB(nn.Module):
-    def __init__(self, backbone):
-        super(HeadB, self).__init__()
-        self.backbone = backbone
-        self.pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.head = nn.Linear(1024, 70)
+# # # Head Task B
+# class HeadB(nn.Module):
+#     def __init__(self, backbone):
+#         super(HeadB, self).__init__()
+#         self.backbone = backbone
+#         self.pool = nn.AdaptiveAvgPool2d((1, 1))
+#         self.head = nn.Linear(1024, 70)
 
-    def forward(self, x):
-        x = self.backbone(x)
-        x = self.pool(x)
-        x = torch.flatten(x, 1)
-        x = self.head(x)
-        return x
+#     def forward(self, x):
+#         x = self.backbone(x)
+#         x = self.pool(x)
+#         x = torch.flatten(x, 1)
+#         x = self.head(x)
+#         return x
     
+class MultiTaskModel(nn.Module):
+    def __init__(self, backbone):
+        super(MultiTaskModel, self).__init__()
+        self.backbone = backbone
+        self.headA = nn.Sequential(
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Flatten(),
+            nn.Linear(1024, 10)
+        )
+        self.headB = nn.Sequential(
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Flatten(),
+            nn.Linear(1024, 70)
+        )
+
+    def forward(self, x, task):
+        x = self.backbone(x)
+        if task == 'A':
+            return self.headA(x)
+        elif task == 'B':
+            return self.headB(x)
+        else:
+            raise ValueError("Task must be 'A' or 'B'")
+        
 # Data
 class CustomDataset(Dataset):
     def __init__(self, annotations_file, img_dir, categories, transform):
@@ -101,10 +125,22 @@ def inference(model, dataloader):
     
     print(f'Accuracy: {100 * correct / total}%')
 
-def train_model(model, train_loader, val_loader, num_epochs=1):
+def train_model(model, train_loader, val_loader, num_epochs=1, task='A'):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.head.parameters(), lr=0.01)
-    model.train()  # Set model to training mode
+    for param in model.backbone.parameters():
+        param.requires_grad = False
+
+    if task == 'A':
+        for param in model.headB.parameters():
+            param.requires_grad = False
+        target_head = model.headA
+    elif task == 'B':
+        for param in model.headA.parameters():
+            param.requires_grad = False
+        target_head = model.headB
+
+    model.train() 
     
     for epoch in range(num_epochs):
         running_loss = 0.0
@@ -112,20 +148,16 @@ def train_model(model, train_loader, val_loader, num_epochs=1):
         for i, (images, labels) in enumerate(train_loader):
             images, labels = images.to(device), labels.to(device)
             
-            # Zero the parameter gradients
             optimizer.zero_grad()
             
-            # Forward pass
             outputs = model(images)
             loss = criterion(outputs, labels)
-            
-            # Backward and optimize
             loss.backward()
             optimizer.step()
             
             running_loss += loss.item() * images.size(0)
 
-            if i % 10 == 0:
+            if i % 10 == 0 or i == len(train_loader)-1:
                 print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(train_loader)}], Loss: {loss.item():.4f}')
                 with torch.no_grad():
                     inference(model, val_loader)
@@ -138,11 +170,11 @@ def train_model(model, train_loader, val_loader, num_epochs=1):
 taskA_categories = list(range(1, 11))
 taskB_categories = list(range(11, 91))
 transform = transforms.Compose([
-        transforms.Resize((256, 256)),           # Resize all images to 256x256
-        transforms.Grayscale(num_output_channels=3),  # Convert grayscale to RGB if needed
-        transforms.ToTensor(),                   # Convert image to PyTorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],  # Normalize using ImageNet mean
-                                std=[0.229, 0.224, 0.225])   # and standard deviation
+        transforms.Resize((256, 256)),          
+        transforms.Grayscale(num_output_channels=3),  
+        transforms.ToTensor(),                  
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],  
+                                std=[0.229, 0.224, 0.225])   
     ])
 
 datasetA = CustomDataset('instances_val2017.json', 'val2017', taskA_categories, transform)
@@ -152,15 +184,6 @@ train_dataset, val_dataset = torch.utils.data.random_split(datasetA, [train_size
 train_loader_A = DataLoader(train_dataset, batch_size=64, shuffle=True)
 val_loader_A = DataLoader(val_dataset, batch_size=64, shuffle=False)
 
-modelA = HeadA(backbone).to(device)
-for param in modelA.backbone.parameters():
-    param.requires_grad = False
-
-print('Training Task A')
-train_model(modelA, train_loader_A, val_loader_A, num_epochs=3)
-torch.save(modelA.state_dict(), 'taskA.pth')
-
-
 datasetB = CustomDataset('instances_val2017.json', 'val2017', taskB_categories, transform)
 train_size_B = int(0.9 * len(datasetB))
 val_size_B = len(datasetB) - train_size_B
@@ -168,13 +191,12 @@ train_dataset_B, val_dataset_B = torch.utils.data.random_split(datasetB, [train_
 train_loader_B = DataLoader(train_dataset_B, batch_size=64, shuffle=True)
 val_loader_B = DataLoader(val_dataset_B, batch_size=64, shuffle=False)
 
-modelB = HeadB(backbone).to(device)
-for param in modelB.backbone.parameters():
-    param.requires_grad = False
+model = MultiTaskModel(backbone).to(device)
+print('Training task A')
+train_model(model, train_loader_A, val_loader_A, num_epochs=3, task='A')
 
 print('Training Task B')
-train_model(modelB, train_loader_B, val_loader_B, num_epochs=3)
-torch.save(modelB.state_dict(), 'taskB.pth')
+train_model(model, train_loader_B, val_loader_B, num_epochs=3, task='B')
 
 
 

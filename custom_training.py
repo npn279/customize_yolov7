@@ -3,6 +3,7 @@ import json
 
 import torch
 from torch import nn
+import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
@@ -24,7 +25,7 @@ weight = args.weight
 backbone = Model(cfg=config, only_backbone=True).to(device)
 state_dict = torch.load(weight, map_location=device)['model'].float().state_dict()
 backbone.load_state_dict(state_dict, strict=False)
-
+ 
 # Head Task A
 class HeadA(nn.Module):
     def __init__(self, backbone):
@@ -100,28 +101,32 @@ transform = transforms.Compose([
     ])
 
 datasetA = CustomDataset('instances_val2017.json', 'val2017', taskA_categories, transform)
-dataloaderA = DataLoader(datasetA, batch_size=32, shuffle=True)
+train_size = int(0.8 * len(datasetA))
+val_size = len(datasetA) - train_size
+train_dataset, val_dataset = torch.utils.data.random_split(datasetA, [train_size, val_size])
+train_loader_A = DataLoader(train_dataset, batch_size=32, shuffle=True)
+val_loader_A = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
 datasetB = CustomDataset('instances_val2017.json', 'val2017', taskB_categories, transform)
-dataloaderB = DataLoader(datasetB, batch_size=32, shuffle=True)
+train_size = int(0.8 * len(datasetB))
+val_size = len(datasetB) - train_size
+train_dataset, val_dataset = torch.utils.data.random_split(datasetB, [train_size, val_size])
+train_loader_B = DataLoader(train_dataset, batch_size=32, shuffle=True)
+val_loader_B = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
 # Training Task A
-
-
-import torch.optim as optim
-
 # Loss and Optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(modelA.head.parameters(), lr=0.001)  # Only optimize the head parameters
 
 # Training loop
-def train_model(model, dataloader, criterion, optimizer, num_epochs=10):
+def train_model(model, dataloader, criterion, optimizer, num_epochs=1):
     model.train()  # Set model to training mode
     
     for epoch in range(num_epochs):
         running_loss = 0.0
         
-        for images, labels in dataloader:
+        for i, (images, labels) in enumerate(dataloader):
             images, labels = images.to(device), labels.to(device)
             
             # Zero the parameter gradients
@@ -136,11 +141,23 @@ def train_model(model, dataloader, criterion, optimizer, num_epochs=10):
             optimizer.step()
             
             running_loss += loss.item() * images.size(0)
-        
+
+            if i % 10 == 0:
+                print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(dataloader)}], Loss: {loss.item():.4f}')
         epoch_loss = running_loss / len(dataloader.dataset)
         print(f'Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}')
     
     print('Training complete')
 
 # Now, call the training function
-train_model(modelA, dataloaderA, criterion, optimizer)
+print('Training Task A')
+train_model(modelA, val_loader_A, criterion, optimizer)
+
+print('Training Task B')
+train_model(modelB, val_loader_B, criterion, optimizer)
+
+# Save the model
+torch.save(modelA.state_dict(), 'taskA.pth')
+torch.save(modelB.state_dict(), 'taskB.pth')
+
+

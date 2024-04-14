@@ -81,8 +81,22 @@ class CustomDataset(Dataset):
         img = self.transform(img)
         return img, label
 
-# Training loop
-def train_model(model, dataloader, num_epochs=1):
+def inference(model, dataloader):
+    model.eval()
+    correct = 0
+    total = 0
+    
+    with torch.no_grad():
+        for images, labels in dataloader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    
+    print(f'Accuracy: {100 * correct / total}%')
+
+def train_model(model, train_loader, val_loader, num_epochs=1):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.head.parameters(), lr=0.001)
     model.train()  # Set model to training mode
@@ -90,7 +104,7 @@ def train_model(model, dataloader, num_epochs=1):
     for epoch in range(num_epochs):
         running_loss = 0.0
         
-        for i, (images, labels) in enumerate(dataloader):
+        for i, (images, labels) in enumerate(train_loader):
             images, labels = images.to(device), labels.to(device)
             
             # Zero the parameter gradients
@@ -107,26 +121,12 @@ def train_model(model, dataloader, num_epochs=1):
             running_loss += loss.item() * images.size(0)
 
             if i % 10 == 0:
-                print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(dataloader)}], Loss: {loss.item():.4f}')
-        epoch_loss = running_loss / len(dataloader.dataset)
+                print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(train_loader)}], Loss: {loss.item():.4f}')
+                inference(model, val_loader)
+        epoch_loss = running_loss / len(train_loader.dataset)
         print(f'Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}')
     
     print('Training complete')
-
-def inference(model, dataloader):
-    model.eval()
-    correct = 0
-    total = 0
-    
-    with torch.no_grad():
-        for images, labels in dataloader:
-            images, labels = images.to(device), labels.to(device)
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    
-    print(f'Accuracy: {100 * correct / total}%')
 
 # DataLoader
 taskA_categories = list(range(1, 11))
@@ -140,7 +140,7 @@ transform = transforms.Compose([
     ])
 
 datasetA = CustomDataset('instances_val2017.json', 'val2017', taskA_categories, transform)
-train_size = int(0.8 * len(datasetA))
+train_size = int(0.9 * len(datasetA))
 val_size = len(datasetA) - train_size
 train_dataset, val_dataset = torch.utils.data.random_split(datasetA, [train_size, val_size])
 train_loader_A = DataLoader(train_dataset, batch_size=32, shuffle=True)
@@ -151,14 +151,12 @@ for param in modelA.backbone.parameters():
     param.requires_grad = False
 
 print('Training Task A')
-train_model(modelA, train_loader_A, num_epochs=1)
+train_model(modelA, train_loader_A, num_epochs=5)
 torch.save(modelA.state_dict(), 'taskA.pth')
-print('Inference Task A')
-inference(modelA, val_loader_A)
 
 
 datasetB = CustomDataset('instances_val2017.json', 'val2017', taskB_categories, transform)
-train_size_B = int(0.8 * len(datasetB))
+train_size_B = int(0.9 * len(datasetB))
 val_size_B = len(datasetB) - train_size_B
 train_dataset_B, val_dataset_B = torch.utils.data.random_split(datasetB, [train_size_B, val_size_B])
 train_loader_B = DataLoader(train_dataset_B, batch_size=32, shuffle=True)
@@ -169,9 +167,7 @@ for param in modelB.backbone.parameters():
     param.requires_grad = False
 
 print('Training Task B')
-train_model(modelB, train_loader_B, num_epochs=1)
+train_model(modelB, train_loader_B, num_epochs=5)
 torch.save(modelB.state_dict(), 'taskB.pth')
-print('Inference Task B')
-inference(modelB, val_loader_B)
 
 

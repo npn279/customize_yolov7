@@ -28,10 +28,6 @@ state_dict = torch.load(weight, map_location=device)['model'].float().state_dict
 backbone.load_state_dict(state_dict, strict=False)
  
 # Head Task A
-import torch.nn as nn
-import torch.nn.functional as F
-    
-
 class MultiTaskModel(nn.Module):
     def __init__(self, backbone):
         super(MultiTaskModel, self).__init__()

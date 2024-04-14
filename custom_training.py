@@ -30,38 +30,8 @@ backbone.load_state_dict(state_dict, strict=False)
 # Head Task A
 import torch.nn as nn
 import torch.nn.functional as F
-
-
-# # Head Task A
-# class HeadA(nn.Module):
-#     def __init__(self, backbone):
-#         super(HeadA, self).__init__()
-#         self.backbone = backbone
-#         self.pool = nn.AdaptiveAvgPool2d((1, 1))
-#         self.head = nn.Linear(1024, 10)
-
-#     def forward(self, x):
-#         x = self.backbone(x)
-#         x = self.pool(x)
-#         x = torch.flatten(x, 1)
-#         x = self.head(x)
-#         return x
-
-# # # Head Task B
-# class HeadB(nn.Module):
-#     def __init__(self, backbone):
-#         super(HeadB, self).__init__()
-#         self.backbone = backbone
-#         self.pool = nn.AdaptiveAvgPool2d((1, 1))
-#         self.head = nn.Linear(1024, 70)
-
-#     def forward(self, x):
-#         x = self.backbone(x)
-#         x = self.pool(x)
-#         x = torch.flatten(x, 1)
-#         x = self.head(x)
-#         return x
     
+
 class MultiTaskModel(nn.Module):
     def __init__(self, backbone):
         super(MultiTaskModel, self).__init__()
@@ -131,12 +101,16 @@ def train_model(model, train_loader, val_loader, num_epochs=1, task='A'):
         param.requires_grad = False
 
     if task == 'A':
+        for param in model.headA.parameters():
+            param.requires_grad = True
         for param in model.headB.parameters():
             param.requires_grad = False
         optimizer = optim.Adam(model.headA.parameters(), lr=0.01)
     elif task == 'B':
         for param in model.headA.parameters():
             param.requires_grad = False
+        for param in model.headB.parameters():
+            param.requires_grad = True
         optimizer = optim.Adam(model.headB.parameters(), lr=0.01)
 
     model.train() 
@@ -196,6 +170,9 @@ train_model(model, train_loader_A, val_loader_A, num_epochs=3, task='A')
 
 print('Training Task B')
 train_model(model, train_loader_B, val_loader_B, num_epochs=3, task='B')
+
+# Save the model
+torch.save(model.state_dict(), 'multitask_model.pth')
 
 
 

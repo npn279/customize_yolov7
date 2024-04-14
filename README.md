@@ -9,6 +9,8 @@ Function: **parse_model**
 Change layers from `d['backbone'] + d['head']` to `d['backbone']` to create model with only backbone
 
 ### custom_training.py
-- Create `backbone` by load model and weight
-- Create simple HeadA and HeadB
+1. Create `backbone` by load model and weight
+2. Create simple **HeadA** and **HeadB** in the **MultitaskModel**
+3. Create dataset, dataloader, training, inference scripts 
+
 

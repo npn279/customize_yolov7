@@ -105,13 +105,13 @@ def train_model(model, train_loader, val_loader, num_epochs=1, task='A'):
             param.requires_grad = True
         for param in model.headB.parameters():
             param.requires_grad = False
-        optimizer = optim.Adam(model.headA.parameters(), lr=0.01)
+        optimizer = optim.Adam(model.headA.parameters(), lr=0.001)
     elif task == 'B':
         for param in model.headA.parameters():
             param.requires_grad = False
         for param in model.headB.parameters():
             param.requires_grad = True
-        optimizer = optim.Adam(model.headB.parameters(), lr=0.01)
+        optimizer = optim.Adam(model.headB.parameters(), lr=0.001)
 
     model.train() 
     
@@ -154,15 +154,15 @@ datasetA = CustomDataset('instances_val2017.json', 'val2017', taskA_categories, 
 train_size = int(0.9 * len(datasetA))
 val_size = len(datasetA) - train_size
 train_dataset, val_dataset = torch.utils.data.random_split(datasetA, [train_size, val_size])
-train_loader_A = DataLoader(train_dataset, batch_size=64, shuffle=True)
-val_loader_A = DataLoader(val_dataset, batch_size=64, shuffle=False)
+train_loader_A = DataLoader(train_dataset, batch_size=32, shuffle=True)
+val_loader_A = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
 datasetB = CustomDataset('instances_val2017.json', 'val2017', taskB_categories, transform)
 train_size_B = int(0.9 * len(datasetB))
 val_size_B = len(datasetB) - train_size_B
 train_dataset_B, val_dataset_B = torch.utils.data.random_split(datasetB, [train_size_B, val_size_B])
-train_loader_B = DataLoader(train_dataset_B, batch_size=64, shuffle=True)
-val_loader_B = DataLoader(val_dataset_B, batch_size=64, shuffle=False)
+train_loader_B = DataLoader(train_dataset_B, batch_size=32, shuffle=True)
+val_loader_B = DataLoader(val_dataset_B, batch_size=32, shuffle=False)
 
 model = MultiTaskModel(backbone).to(device)
 print('Training task A')

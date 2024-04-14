@@ -129,7 +129,7 @@ def train_model(model, train_loader, val_loader, num_epochs=1, task='A'):
             if i % 10 == 0 or i == len(train_loader)-1:
                 print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(train_loader)}], Loss: {loss.item():.4f}')
                 with torch.no_grad():
-                    inference(model, val_loader)
+                    inference(model, val_loader, task=task)
         epoch_loss = running_loss / len(train_loader.dataset)
         print(f'Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}')
     

@@ -114,13 +114,10 @@ train_dataset, val_dataset = torch.utils.data.random_split(datasetB, [train_size
 train_loader_B = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_loader_B = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
-# Training Task A
-# Loss and Optimizer
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(modelA.head.parameters(), lr=0.001)  # Only optimize the head parameters
-
 # Training loop
-def train_model(model, dataloader, criterion, optimizer, num_epochs=1):
+def train_model(model, dataloader, num_epochs=1):
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(modelA.head.parameters(), lr=0.001)
     model.train()  # Set model to training mode
     
     for epoch in range(num_epochs):
@@ -149,12 +146,11 @@ def train_model(model, dataloader, criterion, optimizer, num_epochs=1):
     
     print('Training complete')
 
-# Now, call the training function
 print('Training Task A')
-train_model(modelA, val_loader_A, criterion, optimizer)
+train_model(modelA, val_loader_A)
 
 print('Training Task B')
-train_model(modelB, val_loader_B, criterion, optimizer)
+train_model(modelB, val_loader_B)
 
 # Save the model
 torch.save(modelA.state_dict(), 'taskA.pth')

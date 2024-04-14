@@ -216,19 +216,19 @@ train_model(modelA, train_loader_A, val_loader_A, num_epochs=1)
 torch.save(modelA.state_dict(), 'taskA.pth')
 
 
-# datasetB = CustomDataset('instances_val2017.json', 'val2017', taskB_categories, transform)
-# train_size_B = int(0.9 * len(datasetB))
-# val_size_B = len(datasetB) - train_size_B
-# train_dataset_B, val_dataset_B = torch.utils.data.random_split(datasetB, [train_size_B, val_size_B])
-# train_loader_B = DataLoader(train_dataset_B, batch_size=32, shuffle=True)
-# val_loader_B = DataLoader(val_dataset_B, batch_size=32, shuffle=False)
+datasetB = CustomDataset('instances_val2017.json', 'val2017', taskB_categories, transform)
+train_size_B = int(0.9 * len(datasetB))
+val_size_B = len(datasetB) - train_size_B
+train_dataset_B, val_dataset_B = torch.utils.data.random_split(datasetB, [train_size_B, val_size_B])
+train_loader_B = DataLoader(train_dataset_B, batch_size=32, shuffle=True)
+val_loader_B = DataLoader(val_dataset_B, batch_size=32, shuffle=False)
 
-# modelB = HeadB(backbone).to(device)
-# for param in modelB.backbone.parameters():
-#     param.requires_grad = False
+modelB = HeadB(backbone).to(device)
+for param in modelB.backbone.parameters():
+    param.requires_grad = False
 
-# print('Training Task B')
-# train_model(modelB, train_loader_B, val_loader_B, num_epochs=5)
-# torch.save(modelB.state_dict(), 'taskB.pth')
+print('Training Task B')
+train_model(modelB, train_loader_B, val_loader_B, num_epochs=5)
+torch.save(modelB.state_dict(), 'taskB.pth')
 
 

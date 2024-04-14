@@ -127,7 +127,6 @@ def inference(model, dataloader):
 
 def train_model(model, train_loader, val_loader, num_epochs=1, task='A'):
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.head.parameters(), lr=0.01)
     for param in model.backbone.parameters():
         param.requires_grad = False
 
@@ -135,10 +134,12 @@ def train_model(model, train_loader, val_loader, num_epochs=1, task='A'):
         for param in model.headB.parameters():
             param.requires_grad = False
         target_head = model.headA
+        optimizer = optim.Adam(model.headA.parameters(), lr=0.001)
     elif task == 'B':
         for param in model.headA.parameters():
             param.requires_grad = False
         target_head = model.headB
+        optimizer = optim.Adam(model.headB.parameters(), lr=0.001)
 
     model.train() 
     

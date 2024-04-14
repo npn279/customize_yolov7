@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append('./')
 import json
 
 import torch
@@ -8,7 +10,6 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
 from models.yolo import Model
-import argparse
 import argparse
 
 parser = argparse.ArgumentParser(description='Custom Training')
@@ -146,17 +147,6 @@ def train_model(model, dataloader, num_epochs=1):
     
     print('Training complete')
 
-print('Training Task A')
-train_model(modelA, train_loader_A)
-
-print('Training Task B')
-train_model(modelB, train_loader_B)
-
-# Save the model
-torch.save(modelA.state_dict(), 'taskA.pth')
-torch.save(modelB.state_dict(), 'taskB.pth')
-
-# Inference
 def inference(model, dataloader):
     model.eval()
     correct = 0
@@ -172,9 +162,15 @@ def inference(model, dataloader):
     
     print(f'Accuracy: {100 * correct / total}%')
 
+print('Training Task A')
+train_model(modelA, train_loader_A)
+torch.save(modelA.state_dict(), 'taskA.pth')
 print('Inference Task A')
 inference(modelA, val_loader_A)
 
+print('Training Task B')
+train_model(modelB, train_loader_B)
+torch.save(modelB.state_dict(), 'taskB.pth')
 print('Inference Task B')
 inference(modelB, val_loader_B)
 

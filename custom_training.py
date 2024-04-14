@@ -110,7 +110,7 @@ class CustomDataset(Dataset):
         img = self.transform(img)
         return img, label
 
-def inference(model, dataloader):
+def inference(model, dataloader, task='A'):
     model.eval()
     correct = 0
     total = 0
@@ -118,7 +118,7 @@ def inference(model, dataloader):
     with torch.no_grad():
         for images, labels in dataloader:
             images, labels = images.to(device), labels.to(device)
-            outputs = model(images)
+            outputs = model(images, task)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()

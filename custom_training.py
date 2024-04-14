@@ -101,16 +101,12 @@ def train_model(model, train_loader, val_loader, num_epochs=1, task='A'):
         param.requires_grad = False
 
     if task == 'A':
-        for param in model.headA.parameters():
-            param.requires_grad = True
         for param in model.headB.parameters():
             param.requires_grad = False
         optimizer = optim.Adam(model.headA.parameters(), lr=0.001)
     elif task == 'B':
         for param in model.headA.parameters():
             param.requires_grad = False
-        for param in model.headB.parameters():
-            param.requires_grad = True
         optimizer = optim.Adam(model.headB.parameters(), lr=0.001)
 
     model.train() 
@@ -138,6 +134,9 @@ def train_model(model, train_loader, val_loader, num_epochs=1, task='A'):
         print(f'Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}')
     
     print('Training complete')
+
+    for param in model.parameters():
+        param.requires_grad = True
 
 # DataLoader
 taskA_categories = list(range(1, 11))

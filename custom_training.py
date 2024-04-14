@@ -79,8 +79,8 @@ class HeadB(nn.Module):
         self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
 
         # Dropout and Batch Normalization
-        self.dropout = nn.Dropout(0.1)
-        self.batch_norm = nn.BatchNorm1d(512)  # Adjust to match the output of the conv layer
+        self.dropout = nn.Dropout(0.2)
+        self.batch_norm = nn.BatchNorm2d(512)  # Adjust to match the output of the conv layer
         
         # Linear layer
         self.head = nn.Linear(512, 70)  # Adjust the input features to match the output of the conv layer
@@ -158,7 +158,8 @@ def inference(model, dataloader):
     print(f'Accuracy: {100 * correct / total}%')
 
 def train_model(model, train_loader, val_loader, num_epochs=1):
-    criterion = nn.CrossEntropyLoss()
+    # criterion = nn.CrossEntropyLoss()
+    criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.head.parameters(), lr=0.001)
     model.train()  # Set model to training mode
     
@@ -183,7 +184,8 @@ def train_model(model, train_loader, val_loader, num_epochs=1):
 
             if i % 10 == 0:
                 print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(train_loader)}], Loss: {loss.item():.4f}')
-                inference(model, val_loader)
+                with torch.no_grad():
+                    inference(model, val_loader)
         epoch_loss = running_loss / len(train_loader.dataset)
         print(f'Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}')
     
@@ -200,20 +202,20 @@ transform = transforms.Compose([
                                 std=[0.229, 0.224, 0.225])   # and standard deviation
     ])
 
-datasetA = CustomDataset('instances_val2017.json', 'val2017', taskA_categories, transform)
-train_size = int(0.9 * len(datasetA))
-val_size = len(datasetA) - train_size
-train_dataset, val_dataset = torch.utils.data.random_split(datasetA, [train_size, val_size])
-train_loader_A = DataLoader(train_dataset, batch_size=32, shuffle=True)
-val_loader_A = DataLoader(val_dataset, batch_size=32, shuffle=False)
+# datasetA = CustomDataset('instances_val2017.json', 'val2017', taskA_categories, transform)
+# train_size = int(0.9 * len(datasetA))
+# val_size = len(datasetA) - train_size
+# train_dataset, val_dataset = torch.utils.data.random_split(datasetA, [train_size, val_size])
+# train_loader_A = DataLoader(train_dataset, batch_size=32, shuffle=True)
+# val_loader_A = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
-modelA = HeadA(backbone).to(device)
-for param in modelA.backbone.parameters():
-    param.requires_grad = False
+# modelA = HeadA(backbone).to(device)
+# for param in modelA.backbone.parameters():
+#     param.requires_grad = False
 
-print('Training Task A')
-train_model(modelA, train_loader_A, val_loader_A, num_epochs=1)
-torch.save(modelA.state_dict(), 'taskA.pth')
+# print('Training Task A')
+# train_model(modelA, train_loader_A, val_loader_A, num_epochs=1)
+# torch.save(modelA.state_dict(), 'taskA.pth')
 
 
 datasetB = CustomDataset('instances_val2017.json', 'val2017', taskB_categories, transform)

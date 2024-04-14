@@ -10,7 +10,7 @@ from models.yolo import Model
 
 
 config = 'cfg/training/yolov7.yaml'
-device = 'cpu'
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 weight = 'yolov7.pt'
 
 # Backbone

@@ -32,191 +32,35 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-# class HeadA(nn.Module):
-#     def __init__(self, backbone):
-#         super(HeadA, self).__init__()
-#         self.backbone = backbone
-
-#         # New Convolutional Layer
-#         self.conv = nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=3, stride=1, padding=1)
-        
-#         # Adaptive pooling to flatten the output of the convolution to a fixed size
-#         self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
-
-#         # Dropout and Batch Normalization
-#         self.dropout = nn.Dropout(0.1)
-#         self.batch_norm = nn.BatchNorm1d(512)  # Adjust to match the output of the conv layer
-        
-#         # Linear layer
-#         self.head = nn.Linear(512, 70)  # Adjust the input features to match the output of the conv layer
-
-#     def forward(self, x):
-#         x = self.backbone(x)
-#         x = self.conv(x)
-#         x = self.adaptive_pool(x)
-        
-#         # Flatten the output for processing in dense layers
-#         x = torch.flatten(x, 1)
-        
-#         # Regularization and normalization
-#         x = self.dropout(x)
-#         x = self.batch_norm(x)
-        
-#         # Final linear layer
-#         x = self.head(x)
-
-#         return x
-
-
+# # Head Task A
 class HeadA(nn.Module):
     def __init__(self, backbone):
         super(HeadA, self).__init__()
         self.backbone = backbone
-
-        # First Convolutional Layer
-        self.conv1 = nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=3, stride=1, padding=1)
-        self.relu1 = nn.ReLU()  # Adding a ReLU activation layer
-        self.batch_norm1 = nn.BatchNorm2d(512)  # Using BatchNorm for 2D inputs
-        
-        # Second Convolutional Layer
-        # self.conv2 = nn.Conv2d(in_channels=512, out_channels=256, kernel_size=3, stride=1, padding=1)
-        # self.relu2 = nn.ReLU()  # Adding another ReLU activation layer
-        # self.batch_norm2 = nn.BatchNorm2d(256)  # Using BatchNorm for 2D inputs
-
-        # Adaptive pooling to flatten the output of the convolution to a fixed size
-        self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
-
-        # Dropout and Batch Normalization
-        # self.dropout = nn.Dropout(0.1)
-        self.batch_norm3 = nn.BatchNorm1d(512)  # Adjust to match the output of the last conv layer
-        
-        # Linear layer
-        self.head = nn.Linear(512, 10)  # Adjust the input features to match the output of the last conv layer
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.head = nn.Linear(1024, 10)
 
     def forward(self, x):
         x = self.backbone(x)
-        x = self.conv1(x)
-        x = self.relu1(x)
-        x = self.batch_norm1(x)
-        
-        # x = self.conv2(x)
-        # x = self.relu2(x)
-        # x = self.batch_norm2(x)
-        
-        x = self.adaptive_pool(x)
-        
-        # Flatten the output for processing in dense layers
+        x = self.pool(x)
         x = torch.flatten(x, 1)
-        
-        # Regularization and normalization
-        # x = self.dropout(x)
-        x = self.batch_norm3(x)
-        
-        # Final linear layer
         x = self.head(x)
-
         return x
 
-
+# # Head Task B
 class HeadB(nn.Module):
     def __init__(self, backbone):
         super(HeadB, self).__init__()
         self.backbone = backbone
-
-        # First Convolutional Layer
-        self.conv1 = nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=3, stride=1, padding=1)
-        self.relu1 = nn.ReLU()  # Adding a ReLU activation layer
-        self.batch_norm1 = nn.BatchNorm2d(512)  # Using BatchNorm for 2D inputs
-        
-        # Second Convolutional Layer
-        # self.conv2 = nn.Conv2d(in_channels=512, out_channels=256, kernel_size=3, stride=1, padding=1)
-        # self.relu2 = nn.ReLU()  # Adding another ReLU activation layer
-        # self.batch_norm2 = nn.BatchNorm2d(256)  # Using BatchNorm for 2D inputs
-
-        # Adaptive pooling to flatten the output of the convolution to a fixed size
-        self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
-
-        # Dropout and Batch Normalization
-        # self.dropout = nn.Dropout(0.1)
-        self.batch_norm3 = nn.BatchNorm1d(512)  # Adjust to match the output of the last conv layer
-        
-        # Linear layer
-        self.head = nn.Linear(512, 70)  # Adjust the input features to match the output of the last conv layer
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.head = nn.Linear(1024, 70)
 
     def forward(self, x):
         x = self.backbone(x)
-        x = self.conv1(x)
-        x = self.relu1(x)
-        x = self.batch_norm1(x)
-        
-        # x = self.conv2(x)
-        # x = self.relu2(x)
-        # x = self.batch_norm2(x)
-        
-        x = self.adaptive_pool(x)
-        
-        # Flatten the output for processing in dense layers
+        x = self.pool(x)
         x = torch.flatten(x, 1)
-        
-        # Regularization and normalization
-        # x = self.dropout(x)
-        x = self.batch_norm3(x)
-        
-        # Final linear layer
         x = self.head(x)
-
         return x
-
-# class HeadB(nn.Module):
-#     def __init__(self, backbone):
-#         super(HeadB, self).__init__()
-#         self.backbone = backbone
-        
-#         # New Convolutional Layer
-#         self.conv = nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=3, stride=1, padding=1)
-        
-#         # Adaptive pooling to flatten the output of the convolution to a fixed size
-#         self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
-
-#         # Dropout and Batch Normalization
-#         self.dropout = nn.Dropout(0.2)
-#         self.batch_norm = nn.BatchNorm1d(512)  # Adjust to match the output of the conv layer
-        
-#         # Linear layer
-#         self.head = nn.Linear(512, 70)  # Adjust the input features to match the output of the conv layer
-
-#     def forward(self, x):
-#         x = self.backbone(x)
-#         x = self.conv(x)
-#         x = self.adaptive_pool(x)
-        
-#         # Flatten the output for processing in dense layers
-#         x = torch.flatten(x, 1)
-        
-#         # Regularization and normalization
-#         x = self.dropout(x)
-#         x = self.batch_norm(x)
-        
-#         # Final linear layer
-#         x = self.head(x)
-
-#         return x
-
-    
-# # Head Task B
-# class HeadB(nn.Module):
-#     def __init__(self, backbone):
-#         super(HeadB, self).__init__()
-#         self.backbone = backbone
-#         self.pool = nn.AdaptiveAvgPool2d((1, 1))
-#         self.head = nn.Linear(1024, 70)
-
-#     def forward(self, x):
-#         x = self.backbone(x)
-#         x = self.pool(x)
-#         x = torch.flatten(x, 1)
-#         x = self.head(x)
-#         return x
     
 # Data
 class CustomDataset(Dataset):
@@ -259,7 +103,7 @@ def inference(model, dataloader):
 
 def train_model(model, train_loader, val_loader, num_epochs=1):
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.head.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.head.parameters(), lr=0.01)
     model.train()  # Set model to training mode
     
     for epoch in range(num_epochs):
@@ -305,15 +149,15 @@ datasetA = CustomDataset('instances_val2017.json', 'val2017', taskA_categories, 
 train_size = int(0.9 * len(datasetA))
 val_size = len(datasetA) - train_size
 train_dataset, val_dataset = torch.utils.data.random_split(datasetA, [train_size, val_size])
-train_loader_A = DataLoader(train_dataset, batch_size=16, shuffle=True)
-val_loader_A = DataLoader(val_dataset, batch_size=16, shuffle=False)
+train_loader_A = DataLoader(train_dataset, batch_size=64, shuffle=True)
+val_loader_A = DataLoader(val_dataset, batch_size=64, shuffle=False)
 
 modelA = HeadA(backbone).to(device)
 for param in modelA.backbone.parameters():
     param.requires_grad = False
 
 print('Training Task A')
-train_model(modelA, train_loader_A, val_loader_A, num_epochs=1)
+train_model(modelA, train_loader_A, val_loader_A, num_epochs=3)
 torch.save(modelA.state_dict(), 'taskA.pth')
 
 
@@ -321,15 +165,15 @@ datasetB = CustomDataset('instances_val2017.json', 'val2017', taskB_categories, 
 train_size_B = int(0.9 * len(datasetB))
 val_size_B = len(datasetB) - train_size_B
 train_dataset_B, val_dataset_B = torch.utils.data.random_split(datasetB, [train_size_B, val_size_B])
-train_loader_B = DataLoader(train_dataset_B, batch_size=16, shuffle=True)
-val_loader_B = DataLoader(val_dataset_B, batch_size=16, shuffle=False)
+train_loader_B = DataLoader(train_dataset_B, batch_size=64, shuffle=True)
+val_loader_B = DataLoader(val_dataset_B, batch_size=64, shuffle=False)
 
 modelB = HeadB(backbone).to(device)
 for param in modelB.backbone.parameters():
     param.requires_grad = False
 
 print('Training Task B')
-train_model(modelB, train_loader_B, val_loader_B, num_epochs=5)
+train_model(modelB, train_loader_B, val_loader_B, num_epochs=3)
 torch.save(modelB.state_dict(), 'taskB.pth')
 
 

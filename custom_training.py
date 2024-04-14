@@ -151,7 +151,7 @@ for param in modelA.backbone.parameters():
     param.requires_grad = False
 
 print('Training Task A')
-train_model(modelA, train_loader_A, num_epochs=5)
+train_model(modelA, train_loader_A, val_loader_A, num_epochs=5)
 torch.save(modelA.state_dict(), 'taskA.pth')
 
 
@@ -167,7 +167,7 @@ for param in modelB.backbone.parameters():
     param.requires_grad = False
 
 print('Training Task B')
-train_model(modelB, train_loader_B, num_epochs=5)
+train_model(modelB, train_loader_B, val_loader_B, num_epochs=5)
 torch.save(modelB.state_dict(), 'taskB.pth')
 
 

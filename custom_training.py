@@ -69,7 +69,7 @@ class HeadA(nn.Module):
     
 class HeadB(nn.Module):
     def __init__(self, backbone):
-        super(HeadA, self).__init__()
+        super(HeadB, self).__init__()
         self.backbone = backbone
         
         # New Convolutional Layer

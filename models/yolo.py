@@ -506,9 +506,10 @@ class IBin(nn.Module):
 
 
 class Model(nn.Module):
-    def __init__(self, cfg='yolor-csp-c.yaml', ch=3, nc=None, anchors=None):  # model, input channels, number of classes
+    def __init__(self, cfg='yolor-csp-c.yaml', ch=3, nc=None, anchors=None, only_backbone=False):  # model, input channels, number of classes
         super(Model, self).__init__()
         self.traced = False
+        self.only_backbone = only_backbone
         if isinstance(cfg, dict):
             self.yaml = cfg  # model dict
         else:  # is *.yaml
@@ -525,7 +526,8 @@ class Model(nn.Module):
         if anchors:
             logger.info(f'Overriding model.yaml anchors with anchors={anchors}')
             self.yaml['anchors'] = round(anchors)  # override yaml value
-        self.model, self.save = parse_model(deepcopy(self.yaml), ch=[ch])  # model, savelist
+        self.model, self.save = parse_model(deepcopy(self.yaml), ch=[ch], only_backbone=self.only_backbone)  # model, savelist
+
         self.names = [str(i) for i in range(self.yaml['nc'])]  # default names
         # print([x.shape for x in self.forward(torch.zeros(1, ch, 64, 64))])
 
@@ -733,14 +735,20 @@ class Model(nn.Module):
         model_info(self, verbose, img_size)
 
 
-def parse_model(d, ch):  # model_dict, input_channels(3)
+def parse_model(d, ch, only_backbone):  # model_dict, input_channels(3)
     logger.info('\n%3s%18s%3s%10s  %-40s%-30s' % ('', 'from', 'n', 'params', 'module', 'arguments'))
     anchors, nc, gd, gw = d['anchors'], d['nc'], d['depth_multiple'], d['width_multiple']
     na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
     no = na * (nc + 5)  # number of outputs = anchors * (classes + 5)
 
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
-    for i, (f, n, m, args) in enumerate(d['backbone'] + d['head']):  # from, number, module, args
+
+    if only_backbone == True:
+        layer_head = []
+    else:
+        layer_head = d['head']
+
+    for i, (f, n, m, args) in enumerate(d['backbone'] + layer_head):  # from, number, module, args
         m = eval(m) if isinstance(m, str) else m  # eval strings
         for j, a in enumerate(args):
             try:
@@ -810,6 +818,8 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
         if i == 0:
             ch = []
         ch.append(c2)
+
+
     return nn.Sequential(*layers), sorted(save)
 
 
@@ -824,12 +834,17 @@ if __name__ == '__main__':
     device = select_device(opt.device)
 
     # Create model
-    model = Model(opt.cfg).to(device)
-    model.train()
+    model = Model(opt.cfg, only_backbone=False).to(device)
     
-    if opt.profile:
-        img = torch.rand(1, 3, 640, 640).to(device)
-        y = model(img, profile=True)
+
+
+    print('-'*30)
+    print(model)
+    # model.train()
+    
+    # if opt.profile:
+    #     img = torch.rand(1, 3, 640, 640).to(device)
+    #     y = model(img, profile=True)
 
     # Profile
     # img = torch.rand(8 if torch.cuda.is_available() else 1, 3, 640, 640).to(device)

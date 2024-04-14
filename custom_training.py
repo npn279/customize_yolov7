@@ -7,11 +7,18 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
 from models.yolo import Model
+import argparse
+import argparse
 
+parser = argparse.ArgumentParser(description='Custom Training')
+parser.add_argument('--config', type=str, default='cfg/training/yolov7.yaml', help='Path to the config file')
+parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu', help='Device to use for training')
+parser.add_argument('--weight', type=str, default='yolov7.pt', help='Path to the weight file')
+args = parser.parse_args()
 
-config = 'cfg/training/yolov7.yaml'
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-weight = 'yolov7.pt'
+config = args.config
+device = args.device
+weight = args.weight
 
 # Backbone
 backbone = Model(cfg=config, only_backbone=True).to(device)
